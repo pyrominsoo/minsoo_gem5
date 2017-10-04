@@ -1,0 +1,34 @@
+20170928
+    Success
+        20131205
+            "vexpress.aarch32.ll_20131205.0-gem5.%dcpu.dtb"
+            "vmlinux.aarch32.ll_20131205.0-gem5"
+            aarch32-ubuntu-natty-headless.img
+    Failed
+        20170616
+            "vexpress-v2p-ca15-tc1-gem5_1cpus.20170616.dtb"
+            "vmlinux.vexpress_gem5_v1.20170616"
+            aarch32-ubuntu-natty-headless.img
+20171002
+    Success
+        20170426
+            "armv7_gem5_v1_1cpu.20170426.dtb"
+            "vmlinux.vexpress_gem5_v1.20170426"
+            aarch32-ubuntu-natty-headless.img
+        20170616
+            "armv7_gem5_v1_1cpu.20170616.dtb"
+            "armv8_gem5_v1_1cpu.20170616.dtb"
+            "vmlinux.vexpress_gem5_v1.20170616"
+            aarch32-ubuntu-natty-headless.img
+
+    Failed
+        20170426
+            "vexpress-v2p-ca15-tc1-gem5_1cpus.20170426.dtb"
+            "vexpress-v2p-ca15-tc1-gem5_2cpus.20170426.dtb"
+            "vmlinux.vexpress_gem5_v1.20170426"
+            aarch32-ubuntu-natty-headless.img
+
+    Need to test 20170616 again
+
+
+"vexpress-v2p-ca15-tc1-gem5~~.dtb line maybe faulty"
