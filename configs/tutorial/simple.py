@@ -26,6 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Authors: Jason Power
+# MINSOO TEST
 
 """ This file creates a barebones system and executes 'hello', a simple Hello
 World application.
