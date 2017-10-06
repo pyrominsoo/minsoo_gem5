@@ -31,9 +31,11 @@
 Import('*')
 
 SimObject('Tags.py')
+SimObject('NMRU.py')
 
 Source('base.cc')
 Source('base_set_assoc.cc')
 Source('lru.cc')
 Source('random_repl.cc')
 Source('fa_lru.cc')
+Source('nmru.cc')

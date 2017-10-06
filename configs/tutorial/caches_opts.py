@@ -36,6 +36,7 @@ constructors to initialize some of their parameters.
 """
 
 from m5.objects import Cache
+from m5.objects import NMRU
 
 # Some specific options for caches
 # For all options see src/mem/cache/BaseCache.py
@@ -85,6 +86,7 @@ class L1DCache(L1Cache):
 
     # Set the default size
     size = '64kB'
+    tags = NMRU() #MINSOO : instantiate NMRU cache added through tutorial
 
     def __init__(self, options=None):
         super(L1DCache, self).__init__(options)
