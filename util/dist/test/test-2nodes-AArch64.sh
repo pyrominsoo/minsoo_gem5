@@ -70,7 +70,7 @@ $GEM5_DIST_SH -n $NNODES                                                     \
               --m5-args                                                      \
                  $DEBUG_FLAGS                                                \
               --fs-args                                                      \
-                  --cpu-type=atomic                                          \
+                  --cpu-type=AtomicSimpleCPU                                          \
 		  --num-cpus=1                                               \
                   --machine-type=VExpress_EMM64                              \
                   --disk-image=$IMG                                          \
