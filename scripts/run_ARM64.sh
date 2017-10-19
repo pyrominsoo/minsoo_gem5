@@ -1,0 +1,1 @@
+./build/ARM/gem5.opt configs/example/fs.py --kernel=vmlinux.vexpress_gem5_v1_64.20170616 --machine-type=VExpress_GEM5_V1 --dtb-file=armv8_gem5_v1_1cpu.20170616.dtb --disk-image=aarch64-ubuntu-trusty-headless.img
