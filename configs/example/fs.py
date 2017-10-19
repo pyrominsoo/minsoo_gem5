@@ -83,7 +83,7 @@ def cmd_line_template():
     return None
 
 def build_test_system(np):
-    m5.disableAllListeners()
+    #m5.disableAllListeners()
     cmdline = cmd_line_template()
     if buildEnv['TARGET_ISA'] == "alpha":
         test_sys = makeLinuxAlphaSystem(test_mem_mode, bm[0], options.ruby,
