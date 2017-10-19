@@ -1,1 +1,1 @@
-umount mnt/
+umount /mnt/p0
