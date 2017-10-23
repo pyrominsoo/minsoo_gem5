@@ -27,5 +27,6 @@ m5out
 /app/arm
 /app/native
 /mnt
-/util/dist/test/log*
-/util/dist/test/m5*
+/util/dist/**/log*
+/util/dist/**/m5*
+/util/dist/**/*.zip
