@@ -56,7 +56,7 @@ SW_CONFIG=$GEM5_DIR/configs/dist/sw.py
 GEM5_EXE=$GEM5_DIR/build/ARM/gem5.opt
 
 BOOT_SCRIPT=$GEM5_DIR/util/dist/apache-bench-2014/run.ab.rcS
-GEM5_DIST_SH=$GEM5_DIR/util/dist/gem5-dist.sh
+GEM5_DIST_SH=$(pwd)/gem5-dist.sh
 
 DEBUG_FLAGS="--debug-flags=DistEthernet"
 CHKPT_RESTORE="-r1"
