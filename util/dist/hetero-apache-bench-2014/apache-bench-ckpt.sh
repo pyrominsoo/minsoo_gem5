@@ -80,5 +80,6 @@ $GEM5_DIST_SH -n $NNODES                                                     \
               --n0-args                                                      \
                   --num-cpus=4                                               \
               --cf-args                                                      \
+                  --dist-sync-start=1000000t                               \
                   $CHKPT_RESTORE
 
