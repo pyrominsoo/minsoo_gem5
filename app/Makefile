@@ -1,19 +1,35 @@
-CC = gcc
-ARM_CC = arm-linux-gnueabihf-gcc
-CFLAGS= -Wall -g -static -DNDEBUG
-SRCS = sieve_of_erato.c
-#OBJS = $(EX1_SRCS:.c=.o)
-NATIVE_PATH = native
-ARM_LINUX_PATH = arm
-TARGET = sieve_arm sieve
+CC=gcc
+CFLAGS=-g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG $(OPTFLAGS)
+LIBS=-ldl $(OPTLIBS)
+PREFIX?=/usr/local
+SOURCES=$(wildcard src/**/*.c src/*.c)
+OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
+TARGETS=$(patsubst %.c,%,$(SOURCES))
 
-all: $(TARGET)
+# The Target Build
+all: $(TARGETS)
 
-sieve: $(SRCS)
-	$(CC) $(CFLAGS) -o $(NATIVE_PATH)/$@ $^
 
-sieve_arm : $(SRCS)
-	$(ARM_CC) $(CFLAGS) -o $(ARM_LINUX_PATH)/$@ $^
+arm: CC=arm-linux-gnueabihf-gcc
+arm: all
 
+dev: CFLAGS=-g -Isrc -Wall -Wextra $(OPTFLAGS)
+dev: all
+
+$(TARGETS): build $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS)
+	mv $@ build/
+
+build:
+	@mkdir -p build
+	@mkdir -p bin
+
+# The Cleaner
 clean:
-	rm -f *.o $(NATIVE_PATH)/* $(ARM_LINUX_PATH)/*
+	rm -rf build $(OBJECTS)
+
+# The Checker
+check:
+	@echo Files with potentially dangerous functions.
+	@egrep '[^_.>a-zA-Z0-9](str(n?cpy|n?cat|xfrm|n?dup|str|pbrk|tok|_)|stpn?cpy|a?sn?printf|byte_)' $(SOURCES) || true
+
