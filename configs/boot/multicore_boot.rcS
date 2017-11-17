@@ -1,5 +1,4 @@
 #!/bin/sh
 
 echo "Haha"
-sleep 500
 /sbin/m5 exit
