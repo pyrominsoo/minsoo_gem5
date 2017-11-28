@@ -1,0 +1,1 @@
+./build/ARM/gem5.opt configs/example/fs_twodisk.py --kernel=vmlinux.aarch64.20140821 --machine-type=VExpress_EMM64 --dtb-file=vexpress.aarch64.20140821.dtb --disk-image=aarch64-ubuntu-trusty-headless.img
