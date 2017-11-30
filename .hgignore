@@ -15,3 +15,5 @@ util/m5/*.o
 util/m5/*.a
 util/m5/m5
 system/arm/dt/*.dtb
+tags
+ag_*

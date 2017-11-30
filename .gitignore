@@ -31,3 +31,5 @@ m5out
 /util/dist/**/log*
 /util/dist/**/m5*
 /util/dist/**/*.zip
+ag_*
+tags
