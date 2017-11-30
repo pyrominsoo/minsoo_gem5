@@ -16,3 +16,5 @@ util/m5/*.a
 util/m5/m5
 system/arm/dt/*.dtb
 tests/*
+tags
+ag_*
