@@ -1,0 +1,5 @@
+#!/bin/sh
+
+sudo hdparm -t /dev/sda
+sleep 0.10
+/sbin/m5 exit
