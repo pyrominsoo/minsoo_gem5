@@ -30,6 +30,7 @@
 
 import array
 import bisect
+import functools
 import imp
 import marshal
 import os
@@ -62,32 +63,68 @@ from m5.util import code_formatter, compareVersions
 # When specifying a source file of some type, a set of tags can be
 # specified for that file.
 
+class SourceFilter(object):
+    def __init__(self, predicate):
+        self.predicate = predicate
+
+    def __or__(self, other):
+        return SourceFilter(lambda tags: self.predicate(tags) or
+                                         other.predicate(tags))
+
+    def __and__(self, other):
+        return SourceFilter(lambda tags: self.predicate(tags) and
+                                         other.predicate(tags))
+
+def with_tags_that(predicate):
+    '''Return a list of sources with tags that satisfy a predicate.'''
+    return SourceFilter(predicate)
+
+def with_any_tags(*tags):
+    '''Return a list of sources with any of the supplied tags.'''
+    return SourceFilter(lambda stags: len(set(tags) & stags) > 0)
+
+def with_all_tags(*tags):
+    '''Return a list of sources with all of the supplied tags.'''
+    return SourceFilter(lambda stags: set(tags) <= stags)
+
+def with_tag(tag):
+    '''Return a list of sources with the supplied tag.'''
+    return SourceFilter(lambda stags: tag in stags)
+
+def without_tags(*tags):
+    '''Return a list of sources without any of the supplied tags.'''
+    return SourceFilter(lambda stags: len(set(tags) & stags) == 0)
+
+def without_tag(tag):
+    '''Return a list of sources with the supplied tag.'''
+    return SourceFilter(lambda stags: tag not in stags)
+
+source_filter_factories = {
+    'with_tags_that': with_tags_that,
+    'with_any_tags': with_any_tags,
+    'with_all_tags': with_all_tags,
+    'with_tag': with_tag,
+    'without_tags': without_tags,
+    'without_tag': without_tag,
+}
+
+Export(source_filter_factories)
+
 class SourceList(list):
-    def with_tags_that(self, predicate):
-        '''Return a list of sources with tags that satisfy a predicate.'''
+    def apply_filter(self, f):
         def match(source):
-            return predicate(source.tags)
+            return f.predicate(source.tags)
         return SourceList(filter(match, self))
 
-    def with_any_tags(self, *tags):
-        '''Return a list of sources with any of the supplied tags.'''
-        return self.with_tags_that(lambda stags: len(tags & stags) > 0)
+    def __getattr__(self, name):
+        func = source_filter_factories.get(name, None)
+        if not func:
+            raise AttributeError
 
-    def with_all_tags(self, *tags):
-        '''Return a list of sources with all of the supplied tags.'''
-        return self.with_tags_that(lambda stags: tags <= stags)
-
-    def with_tag(self, tag):
-        '''Return a list of sources with the supplied tag.'''
-        return self.with_tags_that(lambda stags: tag in stags)
-
-    def without_tags(self, *tags):
-        '''Return a list of sources without any of the supplied tags.'''
-        return self.with_tags_that(lambda stags: len(tags & stags) == 0)
-
-    def without_tag(self, tag):
-        '''Return a list of sources with the supplied tag.'''
-        return self.with_tags_that(lambda stags: tag not in stags)
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return self.apply_filter(func(*args, **kwargs))
+        return wrapper
 
 class SourceMeta(type):
     '''Meta class for source files that keeps track of all files of a
@@ -102,16 +139,25 @@ class SourceFile(object):
     of those.  A source file also specifies a set of tags which
     describing arbitrary properties of the source file.'''
     __metaclass__ = SourceMeta
+
+    static_objs = {}
+    shared_objs = {}
+
     def __init__(self, source, tags=None, add_tags=None):
         if tags is None:
             tags='gem5 lib'
         if isinstance(tags, basestring):
             tags = set([tags])
-        if isinstance(add_tags, basestring):
-            add_tags = set([add_tags])
+        if not isinstance(tags, set):
+            tags = set(tags)
+        self.tags = tags
+
         if add_tags:
-            tags = tags | add_tags
-        self.tags = set(tags)
+            if isinstance(add_tags, basestring):
+                add_tags = set([add_tags])
+            if not isinstance(add_tags, set):
+                add_tags = set(add_tags)
+            self.tags |= add_tags
 
         tnode = source
         if not isinstance(source, SCons.Node.FS.File):
@@ -123,6 +169,18 @@ class SourceFile(object):
         for base in type(self).__mro__:
             if issubclass(base, SourceFile):
                 base.all.append(self)
+
+    def static(self, env):
+        key = (self.tnode, env['OBJSUFFIX'])
+        if not key in self.static_objs:
+            self.static_objs[key] = env.StaticObject(self.tnode)
+        return self.static_objs[key]
+
+    def shared(self, env):
+        key = (self.tnode, env['OBJSUFFIX'])
+        if not key in self.shared_objs:
+            self.shared_objs[key] = env.SharedObject(self.tnode)
+        return self.shared_objs[key]
 
     @property
     def filename(self):
@@ -273,11 +331,14 @@ class UnitTest(object):
 
 class GTest(UnitTest):
     '''Create a unit test based on the google test framework.'''
-
     all = []
     def __init__(self, *args, **kwargs):
+        isFilter = lambda arg: isinstance(arg, SourceFilter)
+        self.filters = filter(isFilter, args)
+        args = filter(lambda a: not isFilter(a), args)
         super(GTest, self).__init__(*args, **kwargs)
         self.dir = Dir('.')
+        self.skip_lib = kwargs.pop('skip_lib', False)
 
 # Children should have access
 Export('Source')
@@ -960,9 +1021,6 @@ def makeEnv(env, label, objsfx, strip=False, disable_partial=False, **kwargs):
     new_env.Label = label
     new_env.Append(**kwargs)
 
-    make_static = lambda source: new_env.StaticObject(source.tnode)
-    make_shared = lambda source: new_env.SharedObject(source.tnode)
-
     lib_sources = Source.all.with_tag('gem5 lib')
 
     # Without Python, leave out all Python content from the library
@@ -974,16 +1032,16 @@ def makeEnv(env, label, objsfx, strip=False, disable_partial=False, **kwargs):
     shared_objs = []
 
     for s in lib_sources.with_tag(Source.ungrouped_tag):
-        static_objs.append(make_static(s))
-        shared_objs.append(make_shared(s))
+        static_objs.append(s.static(new_env))
+        shared_objs.append(s.shared(new_env))
 
     for group in Source.source_groups:
         srcs = lib_sources.with_tag(Source.link_group_tag(group))
         if not srcs:
             continue
 
-        group_static = [ make_static(s) for s in srcs ]
-        group_shared = [ make_shared(s) for s in srcs ]
+        group_static = [ s.static(new_env) for s in srcs ]
+        group_shared = [ s.shared(new_env) for s in srcs ]
 
         # If partial linking is disabled, add these sources to the build
         # directly, and short circuit this loop.
@@ -1004,11 +1062,11 @@ def makeEnv(env, label, objsfx, strip=False, disable_partial=False, **kwargs):
         partial = env.PartialShared(target=target, source=group_shared)
         shared_objs.extend(partial)
 
-    static_date = make_static(date_source)
+    static_date = date_source.static(new_env)
     new_env.Depends(static_date, static_objs)
     static_objs.extend(static_date)
 
-    shared_date = make_shared(date_source)
+    shared_date = date_source.shared(new_env)
     new_env.Depends(shared_date, shared_objs)
     shared_objs.extend(shared_date)
 
@@ -1018,11 +1076,11 @@ def makeEnv(env, label, objsfx, strip=False, disable_partial=False, **kwargs):
     shared_lib = new_env.SharedLibrary(libname, shared_objs)
 
     # Now link a stub with main() and the static library.
-    main_objs = [ make_static(s) for s in Source.all.with_tag('main') ]
+    main_objs = [ s.static(new_env) for s in Source.all.with_tag('main') ]
 
     for test in UnitTest.all:
         test_sources = Source.all.with_tag(str(test.target))
-        test_objs = [ make_static(s) for s in test_sources ]
+        test_objs = [ s.static(new_env) for s in test_sources ]
         if test.main:
             test_objs += main_objs
         path = 'unittest/%s.%s' % (test.target, label)
@@ -1031,11 +1089,20 @@ def makeEnv(env, label, objsfx, strip=False, disable_partial=False, **kwargs):
     gtest_env = new_env.Clone()
     gtest_env.Append(LIBS=gtest_env['GTEST_LIBS'])
     gtest_env.Append(CPPFLAGS=gtest_env['GTEST_CPPFLAGS'])
+    gtestlib_sources = Source.all.with_tag('gtest lib')
+    gtests = []
     for test in GTest.all:
-        test_sources = Source.all.with_tag(str(test.target))
-        test_objs = [ gtest_env.StaticObject(s.tnode) for s in test_sources ]
-        gtest_env.Program(test.dir.File('%s.%s' % (test.target, label)),
-                          test_objs)
+        test_sources = test.sources
+        if not test.skip_lib:
+            test_sources += gtestlib_sources
+        for f in test.filters:
+            test_sources += Source.all.apply_filter(f)
+        test_objs = [ s.static(gtest_env) for s in test_sources ]
+        gtests.append(gtest_env.Program(
+            test.dir.File('%s.%s' % (test.target, label)), test_objs))
+
+    gtest_target = Dir(new_env['BUILDDIR']).File('unittests.%s' % label)
+    AlwaysBuild(Command(gtest_target, gtests, gtests))
 
     progname = exename
     if strip:

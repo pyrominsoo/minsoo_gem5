@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2017 Jason Lowe-Power
+ * Copyright (c) 2015 RISC-V Foundation
+ * Copyright (c) 2017 The University of Virginia
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,53 +26,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Authors: Jason Lowe-Power
+ * Authors: Alec Roelke
  */
 
-#include "learning_gem5/part2/hello_object.hh"
+#include "arch/riscv/insts/compressed.hh"
 
-#include "base/logging.hh"
-#include "debug/HelloExample.hh"
+#include <sstream>
+#include <string>
 
-HelloObject::HelloObject(HelloObjectParams *params) :
-    SimObject(params),
-    // This is a C++ lambda. When the event is triggered, it will call the
-    // processEvent() function. (this must be captured)
-    event([this]{ processEvent(); }, name() + ".event"),
-    goodbye(params->goodbye_object),
-    // Note: This is not needed as you can *always* reference this->name()
-    myName(params->name),
-    latency(params->time_to_wait),
-    timesLeft(params->number_of_fires)
+#include "arch/riscv/utility.hh"
+#include "cpu/static_inst.hh"
+
+namespace RiscvISA
 {
-    DPRINTF(HelloExample, "Created the hello object\n");
-    panic_if(!goodbye, "HelloObject must have a non-null GoodbyeObject");
+
+std::string
+CompRegOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+{
+    std::stringstream ss;
+    ss << mnemonic << ' ' << registerName(_destRegIdx[0]) << ", " <<
+        registerName(_srcRegIdx[0]);
+    return ss.str();
 }
 
-void
-HelloObject::startup()
-{
-    // Before simulation starts, we need to schedule the event
-    schedule(event, latency);
-}
-
-void
-HelloObject::processEvent()
-{
-    timesLeft--;
-    DPRINTF(HelloExample, "Hello world! Processing the event! %d left\n",
-                          timesLeft);
-
-    if (timesLeft <= 0) {
-        DPRINTF(HelloExample, "Done firing!\n");
-        goodbye->sayGoodbye(myName);
-    } else {
-        schedule(event, curTick() + latency);
-    }
-}
-
-HelloObject*
-HelloObjectParams::create()
-{
-    return new HelloObject(this);
 }
