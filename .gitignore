@@ -33,3 +33,4 @@ m5out
 /util/dist/**/*.zip
 ag_*
 tags
+nohup.out
