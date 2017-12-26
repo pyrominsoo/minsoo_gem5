@@ -1,0 +1,27 @@
+#!/bin/bash
+# Authors: Mohammad Alian <malian2@illinois.edu>
+#
+# The idea of this script is the same as
+# "configs/boot/hack_back_ckpt.rcS" by Joel Hestness
+# Please look into that for more info
+#
+source /root/.bashrc
+echo "start apache bench"
+# Retrieve dist-gem5 rank and size parameters using the 'm5' utility
+MY_RANK=$(/sbin/m5 initparam dist-rank)
+[ $? = 0 ] || { echo "m5 initparam failed"; exit -1; }
+MY_SIZE=$(/sbin/m5 initparam dist-size)
+[ $? = 0 ] || { echo "m5 initparam failed"; exit -1; }
+
+if [ "$MY_RANK" == "0" ]
+then
+    sleep 100
+else
+    sleep 5
+    #ab -c 10 -n 1000 http://192.168.0.2/index.html
+    mount -t nfs -o proto=tcp,port=2049 192.168.0.2:/ /mnt
+    ls /mnt
+fi
+
+/sbin/m5 exit 1
+
