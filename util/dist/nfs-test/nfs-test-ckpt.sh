@@ -48,7 +48,7 @@
 GEM5_DIR=$(pwd)/$(dirname $0)/../../..
 
 IMG=$M5_PATH/disks/aarch64-ubuntu-trusty-headless.img
-VMLINUX=$M5_PATH/binaries/vmlinux.aarch64.20140821
+VMLINUX=$M5_PATH/binaries/vmlinux-minsoo
 DTB=$M5_PATH/binaries/vexpress.aarch64.20140821.dtb
 
 FS_CONFIG=$GEM5_DIR/configs/example/fs_dist.py
