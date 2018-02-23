@@ -21,7 +21,6 @@ else
     #ab -c 10 -n 1000 http://192.168.0.2/index.html
     mount -t nfs -o proto=tcp,port=2049 192.168.0.2:/ /mnt
     time dd if=/dev/zero of=/mnt/testfile bs=16k count=16384
-    time dd if=/mnt/testfile of=/dev/null bs=16k
     ls /mnt
     rm /mnt/testfile
     ls /mnt
