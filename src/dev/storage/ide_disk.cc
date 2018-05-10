@@ -386,7 +386,7 @@ void
 IdeDisk::doDmaDataRead()
 {
     /** @todo we need to figure out what the delay actually will be */
-    Tick totalDiskDelay = diskDelay + (curPrd.getByteCount() / SectorSize);
+    Tick totalDiskDelay = diskDelay + 20000000*(curPrd.getByteCount() / SectorSize);
 
     DPRINTF(IdeDisk, "doDmaRead, diskDelay: %d totalDiskDelay: %d\n",
             diskDelay, totalDiskDelay);
@@ -493,7 +493,7 @@ void
 IdeDisk::doDmaDataWrite()
 {
     /** @todo we need to figure out what the delay actually will be */
-    Tick totalDiskDelay = diskDelay + (curPrd.getByteCount() / SectorSize);
+    Tick totalDiskDelay = diskDelay + 20000000*(curPrd.getByteCount() / SectorSize);
     uint32_t bytesRead = 0;
 
     DPRINTF(IdeDisk, "doDmaWrite, diskDelay: %d totalDiskDelay: %d\n",

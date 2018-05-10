@@ -202,6 +202,10 @@ DistEtherLink::TxLink::transmit(EthPacketPtr pkt)
     if (delayVar != 0)
         delay += random_mt.random<Tick>(0, delayVar);
 
+    // MINSOO : add additional delay to host
+    delay += 100000000;
+
+
     // send the packet to the peers
     assert(distIface);
     distIface->packetOut(pkt, delay);

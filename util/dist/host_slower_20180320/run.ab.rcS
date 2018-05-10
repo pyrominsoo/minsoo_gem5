@@ -1,0 +1,48 @@
+#!/bin/bash
+# Authors: Mohammad Alian <malian2@illinois.edu>
+#
+# The idea of this script is the same as
+# "configs/boot/hack_back_ckpt.rcS" by Joel Hestness
+# Please look into that for more info
+#
+source /root/.bashrc
+echo "start apache bench"
+# Retrieve dist-gem5 rank and size parameters using the 'm5' utility
+MY_RANK=$(/sbin/m5 initparam dist-rank)
+[ $? = 0 ] || { echo "m5 initparam failed"; exit -1; }
+MY_SIZE=$(/sbin/m5 initparam dist-size)
+[ $? = 0 ] || { echo "m5 initparam failed"; exit -1; }
+
+if [ "$MY_RANK" == "0" ]
+then
+    sleep 5
+    #bandwidth
+    time dd if=/dev/zero of=/home/users/haha bs=16k count=16384
+    sleep 10000
+elif [ "$MY_RANK" == "1" ]
+then
+    sleep 5
+    #check local bandwidth
+    time dd if=/dev/zero of=/home/users/haha bs=16k count=16384
+    sleep 10000
+else
+    # Host that connects to slaves via NFS
+    sleep 5
+    #ab -c 10 -n 1000 http://192.168.0.2/index.html
+    mount -t nfs -o proto=tcp,port=2049 192.168.0.2:/ /mnt/p0
+    mount -t nfs -o proto=tcp,port=2049 192.168.0.3:/ /mnt/p1
+    #time dd if=/dev/zero of=/mnt/haha bs=16k count=16384
+    #Write bandwidth
+    time dd if=/dev/zero of=/mnt/p0/haha bs=16k count=16384
+    #Read bandwidth
+    time dd if=/mnt/p0/haha of=/home/users/2000.in bs=16k
+    #Write bandwidth
+    time dd if=/dev/zero of=/mnt/p1/haha bs=16k count=16384
+    #Read bandwidth
+    time dd if=/mnt/p1/haha of=/home/users/2000.in bs=16k
+    #ls /mnt/
+    #time grep "552" /mnt/100.in
+fi
+
+/sbin/m5 exit 1
+
